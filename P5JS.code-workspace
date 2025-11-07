@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../P5JS Spiral"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Norton's P5JS",
+		"liveServer.settings.port": 5501
+	}
+}

@@ -1,0 +1,7 @@
+- p5 3d conventions
+    - Call the translate function to change the origin
+    - This origin is where objects are placed
+    - This origin is where rotations happen
+ 
+ - Maybe the best thing to do would be to use make this library mirror p5's conventions exactly?
+- It could render via p5's WEBGL mode for designing the thing, then I could switch to ln mode to make the final svg?
