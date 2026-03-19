@@ -147,7 +147,7 @@ function setup() {
   ({input: thrombusSlider, val: thrombusSpan} = addSliderRow('Thrombus %', 0, 100, 1, thrombusPercent, (v) => thrombusPercent = v));
 
   // Hide all sliders except the core controls we want visible
-  const allowed = new Set(['METs (0-10)', 'Ischemia (%)', 'Athero %', 'Thrombus %']);
+  const allowed = new Set(['Ischemia (%)', 'Athero %', 'Thrombus %']);
   for (let i = 0; i < controlsDiv.children.length; i++) {
     const row = controlsDiv.children[i];
     // first child is the label div
