@@ -272,7 +272,8 @@ function drawECG(hr) {
     // compute total anatomical narrowing fraction (used to force ischemia at extreme stenosis)
     const aFrac = a / 100.0;
     const tFrac = t / 100.0;
-    const combinedFrac = Math.min(1.0, aFrac + thrombusBias * tFrac * (1.0 - aFrac));
+    // thrombus fills remaining lumen after athero (no bias multiplier for smooth progression)
+    const combinedFrac = Math.min(1.0, aFrac + tFrac * (1.0 - aFrac));
 
     // METs effect (no effect until METs > 2)
     const metFactor = constrain((mets - 2) / (10 - 2), 0, 1);
@@ -287,7 +288,7 @@ function drawECG(hr) {
   const aFracLocal = a / 100.0;
   const thrombusAtheroSynergy = 2.0; // additional multiplier per full athero fraction
   const thrombusMultiplier = 1.0 + thrombusAtheroSynergy * aFracLocal;
-  const thrombusIschemia = constrain(tFactor * thrombusBias * thrombusMultiplier * 100.0, 0, 100);
+  const thrombusIschemia = constrain(tFactor * thrombusMultiplier * 100.0, 0, 100);
 
     // The effective ischemia is at least the thrombus-driven value or the METs-driven base
     let effectiveIschemia = Math.max(baseIschemia, thrombusIschemia);
@@ -655,30 +656,43 @@ function drawVessel() {
     vesselCtx.stroke();
   }
 
-  // draw thrombus annulus (between innerR_afterAthero and newInnerR) if thrombus narrows further
-  if (tFrac > 0.001 && newInnerR < innerR_afterAthero - 0.5) {
-    vesselCtx.beginPath();
-    vesselCtx.arc(cx, cy, innerR_afterAthero, 0, Math.PI * 2, false);
-    vesselCtx.arc(cx, cy, newInnerR, 0, Math.PI * 2, true);
-    vesselCtx.closePath();
-    // thrombus color: brown
-    vesselCtx.fillStyle = '#8B4513';
-    vesselCtx.fill();
-    vesselCtx.strokeStyle = '#5a2b0a';
-    vesselCtx.lineWidth = Math.max(1, Math.round(innerR * 0.02));
-    vesselCtx.stroke();
-  }
-
-  // draw lumen at the (possibly) narrowed radius
+  // draw lumen at the post-atherosclerosis radius
   vesselCtx.beginPath();
-  vesselCtx.arc(cx, cy, newInnerR, 0, Math.PI * 2);
+  vesselCtx.arc(cx, cy, innerR_afterAthero, 0, Math.PI * 2);
   vesselCtx.fillStyle = '#ffdddd';
   vesselCtx.fill();
   vesselCtx.lineWidth = 1.5;
   vesselCtx.strokeStyle = '#cc6666';
   vesselCtx.stroke();
 
-  // (thrombus now represented as annulus; no central dot)
+  // draw thrombus as a bottom-up fill (like water rising in the vessel)
+  if (tFrac > 0.001) {
+    const lumenR = innerR_afterAthero;
+    // fill height spans from 0 (empty) to full diameter (2*lumenR)
+    const fillHeight = 2 * lumenR * tFrac;
+    // bottom of the lumen circle is cy + lumenR; fill rises upward
+    const fillY = cy + lumenR - fillHeight;
+
+    vesselCtx.save();
+    // clip to the lumen circle so the fill stays inside
+    vesselCtx.beginPath();
+    vesselCtx.arc(cx, cy, lumenR - 0.5, 0, Math.PI * 2);
+    vesselCtx.clip();
+
+    // draw the thrombus fill rectangle (clipped to circle)
+    vesselCtx.fillStyle = '#8B4513';
+    vesselCtx.fillRect(cx - lumenR, fillY, 2 * lumenR, fillHeight + 1);
+
+    // subtle top edge line
+    vesselCtx.strokeStyle = '#5a2b0a';
+    vesselCtx.lineWidth = 1.5;
+    vesselCtx.beginPath();
+    vesselCtx.moveTo(cx - lumenR, fillY);
+    vesselCtx.lineTo(cx + lumenR, fillY);
+    vesselCtx.stroke();
+
+    vesselCtx.restore();
+  }
 
   // small label
   vesselCtx.fillStyle = '#222';
